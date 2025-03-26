@@ -1,0 +1,12 @@
+[package]
+name = "artek"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+uuid = { version = "1.0", features = ["v4"] }
+tokio = { version = "1.0", features = ["full", "rt-multi-thread", "time"] }
+tokio-tungstenite = "0.20.0"
+zmq = "0.10.0"
+futures = "0.3.0"
+tokio-sync = "0.1.0"

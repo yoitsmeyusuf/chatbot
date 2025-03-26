@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Chatbot UI</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        #chat-container {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            height: 500px;
+            overflow-y: auto;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f9f9f9;
+        }
+        .message {
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        .user-message {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        .bot-message {
+            background: #e9ecef;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+        #input-container {
+            display: flex;
+            gap: 10px;
+        }
+        #user-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            width: 100%;
+        }
+        #send-button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        #status {
+            color: #666;
+            margin: 10px 0;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chatbot</h1>
+    <div id="chat-container"></div>
+    <div id="status">Durum: Bağlantı kuruluyor...</div>
+    <div id="input-container">
+        <input type="text" id="user-input" placeholder="Mesajınızı yazın...">
+        <button id="send-button">Gönder</button>
+    </div>
+
+    <script>
+        const WS_SERVER_IP = '192.168.251.165'; // WSL IP'nizi yazın
+        const WS_PORT = 3000;
+        let websocket;
+
+        // WebSocket bağlantısı
+        function connectWebSocket() {
+            websocket = new WebSocket(`ws://${WS_SERVER_IP}:${WS_PORT}`);
+            
+            websocket.onopen = () => {
+                updateStatus(`✅ Sunucuya bağlandı`);
+                addBotMessage("Merhaba! Size nasıl yardımcı olabilirim?");
+            };
+
+            websocket.onmessage = (event) => {
+                addBotMessage(event.data);
+            };
+
+            websocket.onerror = (error) => {
+                updateStatus(`❌ Bağlantı hatası: ${error.message}`);
+            };
+
+            websocket.onclose = () => {
+                updateStatus("❌ Bağlantı kesildi. Yeniden bağlanılıyor...");
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        // Mesaj gönderme
+        function sendMessage() {
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+            
+            if (message && websocket.readyState === WebSocket.OPEN) {
+                addUserMessage(message);
+                websocket.send(message);
+                input.value = '';
+            }
+        }
+
+        // Mesaj ekleme fonksiyonları
+        function addUserMessage(text) {
+            addMessage(text, 'user-message');
+        }
+
+        function addBotMessage(text) {
+            addMessage(text, 'bot-message');
+        }
+
+        function addMessage(text, className) {
+            const chatContainer = document.getElementById('chat-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${className}`;
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Durum güncelleme
+        function updateStatus(text) {
+            document.getElementById('status').textContent = `Durum: ${text}`;
+        }
+
+        // Event listeners
+        document.getElementById('send-button').addEventListener('click', sendMessage);
+        document.getElementById('user-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Başlangıç bağlantısı
+        connectWebSocket();
+    </script>
+</body>
+</html>
